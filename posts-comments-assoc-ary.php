@@ -20,6 +20,7 @@ $options = [
 
 try {
     $pdo = new PDO($dsn, $user, $pass, $options); // Izveido savienojumu
+    
     // 2. SQL vaicājums ar LEFT JOIN (iegūstam plakano masīvu)
     $sql = "
         SELECT 
@@ -38,8 +39,32 @@ try {
     // Iegūstam datus kā plakano masīvu
     $flatData = $stmt->fetchAll();
 
-    // Ja dati ir iegūti veiksmīgi, varam turpināt apstrādāt
-    echo "Dati veiksmīgi iegūti.";
+    // 3. Pārveidojam plakano masīvu uz asociatīvu struktūru
+    $structuredData = [];
+
+    foreach ($flatData as $row) {
+        $postId = $row['post_id'];
+
+        if (!isset($structuredData[$postId])) {
+            $structuredData[$postId] = [
+                'post_id' => $postId,
+                'title' => $row['title'],
+                'content' => $row['content'],
+                'comments' => []
+            ];
+        }
+
+        if (!empty($row['comment_id'])) {
+            $structuredData[$postId]['comments'][] = [
+                'comment_id' => $row['comment_id'],
+                'comment_text' => $row['comment_text']
+            ];
+        }
+    }
+
+    // Ja dati ir iegūti un pārveidoti veiksmīgi, varam turpināt attēlot datus
+    echo "Dati veiksmīgi iegūti un pārveidoti.";
+
 } catch (PDOException $e) {
     // Ja rodas kļūda savienojumā, parādām ziņojumu
     die("Savienojuma kļūda: " . $e->getMessage());
