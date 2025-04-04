@@ -3,6 +3,40 @@
 3. dabuju no datubazes plakanu masivu(nav hierarhijas)
 4. parveidojam flat masivu par associativu
 5. izvadit datus html -->
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+    <meta charset="UTF-8">
+    <title>Posti un komentāri</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f7f7f7;
+            padding: 30px;
+        }
+        .post {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .post h2 {
+            margin-top: 0;
+        }
+        .comments {
+            margin-top: 15px;
+        }
+        .comments ul {
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+<h1>Posti un komentāri</h1>
+
+<div id="posts-container"></div>
 
 <?php
 // Pieslēgšanās datubāzei
@@ -65,67 +99,35 @@ try {
 } catch (PDOException $e) {
     die("Savienojuma kļūda: " . $e->getMessage());
 }
-?>
-<!DOCTYPE html>
-<html lang="lv">
-<head>
-    <meta charset="UTF-8">
-    <title>Posti un komentāri</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            background: #f7f7f7;
-            padding: 30px;
-        }
-        .post {
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .post h2 {
-            margin-top: 0;
-        }
-        .comments {
-            margin-top: 15px;
-        }
-        .comments ul {
-            padding-left: 20px;
-        }
-    </style>
-</head>
-<body>
 
-<h1>Posti un komentāri</h1>
 
-<div id="posts-container"></div>
+echo '<div class="posts-container">';
 
-<script>
-    // PHP datu pārsūtīšana uz JavaScript
-    const data = <?php echo $jsonData; ?>;
-    
-    let postsContainer = document.getElementById('posts-container');
-    
-    // Pārlūkojam katru postu
-    for (let postId in data) {
-        let post = data[postId];
-        let postHtml = `
-            <div class="post">
-                <h2>${post.title}</h2>
-                <p>${post.content}</p>
-                <div class="comments">
-                    <h4>Komentāri:</h4>
-                    ${post.comments.length > 0 ? 
-                    '<ul>' + post.comments.map(comment => `<li>${comment.comment_text}</li>`).join('') + '</ul>' 
-                    : '<p><em>Nav komentāru.</em></p>'}
-                </div>
-            </div>
-        `;
-        postsContainer.innerHTML += postHtml;
+foreach ($structuredData as $post) {
+    // Veidojam HTML, izmantojot PHP
+    echo '<div class="post">';
+    echo '<h2>' . htmlspecialchars($post['title']) . '</h2>';
+    echo '<p>' . nl2br(htmlspecialchars($post['content'])) . '</p>';
+
+    echo '<div class="comments">';
+    echo '<h4>Komentāri:</h4>';
+
+    if (!empty($post['comments'])) {
+        echo '<ul>';
+        foreach ($post['comments'] as $comment) {
+            echo '<li>' . htmlspecialchars($comment['comment_text']) . '</li>';
+        }
+        echo '</ul>';
+    } else {
+        echo '<p><em>Nav komentāru.</em></p>';
     }
-</script>
+
+    echo '</div>'; // .comments
+    echo '</div>'; // .post
+}
+
+echo '</div>'; // .posts-container
+?>
 
 </body>
 </html>
