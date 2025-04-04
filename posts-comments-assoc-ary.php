@@ -5,23 +5,23 @@
 5. izvadit datus html -->
 
 <?php
-// 1. Pieslēgšanās datubāzei
-$host = 'localhost'; // Datubāzes serveris
-$db   = 'blog_12032025'; // Datubāzes nosaukums
-$user = 'TripiTropi'; // Lietotājvārds
-$pass = 'password'; // Parole
-$charset = 'utf8mb4'; // Rakstzīmju komplekts
+// Pieslēgšanās datubāzei
+$host = 'localhost';
+$db   = 'blog_12032025';
+$user = 'TripiTropi';
+$pass = 'password';
+$charset = 'utf8mb4';
 
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset"; // DSN (Data Source Name)
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 $options = [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, // Aktivē kļūdu ziņojumus
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC // Iestatām, lai rezultāti būtu asociatīvi masīvi
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
 ];
 
 try {
-    $pdo = new PDO($dsn, $user, $pass, $options); // Izveido savienojumu
-    
-    // 2. SQL vaicājums ar LEFT JOIN (iegūstam plakano masīvu)
+    $pdo = new PDO($dsn, $user, $pass, $options);
+
+    // SQL vaicājums
     $sql = "
         SELECT 
             posts.post_id,
@@ -33,13 +33,10 @@ try {
         LEFT JOIN comments ON posts.post_id = comments.post_id
     ";
 
-    // Veicam vaicājumu
     $stmt = $pdo->query($sql);
-
-    // Iegūstam datus kā plakano masīvu
     $flatData = $stmt->fetchAll();
 
-    // 3. Pārveidojam plakano masīvu uz asociatīvu struktūru
+    // Pārveidojam uz asociatīvo struktūru
     $structuredData = [];
 
     foreach ($flatData as $row) {
@@ -62,11 +59,73 @@ try {
         }
     }
 
-    // Ja dati ir iegūti un pārveidoti veiksmīgi, varam turpināt attēlot datus
-    echo "Dati veiksmīgi iegūti un pārveidoti.";
+    // Saglabājam datus JSON formātā
+    $jsonData = json_encode($structuredData);
 
 } catch (PDOException $e) {
-    // Ja rodas kļūda savienojumā, parādām ziņojumu
     die("Savienojuma kļūda: " . $e->getMessage());
 }
 ?>
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+    <meta charset="UTF-8">
+    <title>Posti un komentāri</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f7f7f7;
+            padding: 30px;
+        }
+        .post {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .post h2 {
+            margin-top: 0;
+        }
+        .comments {
+            margin-top: 15px;
+        }
+        .comments ul {
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Posti un komentāri</h1>
+
+<div id="posts-container"></div>
+
+<script>
+    // PHP datu pārsūtīšana uz JavaScript
+    const data = <?php echo $jsonData; ?>;
+    
+    let postsContainer = document.getElementById('posts-container');
+    
+    // Pārlūkojam katru postu
+    for (let postId in data) {
+        let post = data[postId];
+        let postHtml = `
+            <div class="post">
+                <h2>${post.title}</h2>
+                <p>${post.content}</p>
+                <div class="comments">
+                    <h4>Komentāri:</h4>
+                    ${post.comments.length > 0 ? 
+                    '<ul>' + post.comments.map(comment => `<li>${comment.comment_text}</li>`).join('') + '</ul>' 
+                    : '<p><em>Nav komentāru.</em></p>'}
+                </div>
+            </div>
+        `;
+        postsContainer.innerHTML += postHtml;
+    }
+</script>
+
+</body>
+</html>
