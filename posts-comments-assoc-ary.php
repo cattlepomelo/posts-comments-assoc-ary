@@ -4,7 +4,8 @@
 4. parveidojam flat masivu par associativu
 5. izvadit datus html
 6. mainit masivu uz objektu un pievienot konstruktoru
-7. izvadīt posts ar funkciju display(); -->
+7. izvadīt posts ar funkciju display();
+8. pieslegšanas pie datubazes caur include un arejo failu -->
 
 <!DOCTYPE html>
 <html lang="lv">
@@ -42,6 +43,9 @@
 <div id="posts-container"></div>
 
 <?php
+// Iekļaujam database.php, lai izmantotu savienojumu ar datubāzi
+include 'database.php';
+
 class Comment {
     public $comment_id;
     public $comment_text;
@@ -92,21 +96,8 @@ class Post {
     }
 }
 
-$host = 'localhost';
-$db   = 'blog_12032025';
-$user = 'TripiTropi';
-$pass = 'password';
-$charset = 'utf8mb4';
-
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-];
-
+// Veicam datubāzes pieprasījumu, izmantojot `pdo` mainīgo no db_connection.php
 try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
-
     $sql = "
         SELECT 
             posts.post_id,
@@ -145,7 +136,7 @@ try {
     $posts[999] = $post;
 
 } catch (PDOException $e) {
-    die("Savienojuma kļūda: " . $e->getMessage());
+    die("Kļūda pieprasījumā: " . $e->getMessage());
 }
 
 echo '<div class="posts-container">';
