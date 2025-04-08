@@ -5,7 +5,8 @@
 5. izvadit datus html
 6. mainit masivu uz objektu un pievienot konstruktoru
 7. izvadīt posts ar funkciju display();
-8. pieslegšanas pie datubazes caur include un arejo failu -->
+8. pieslegšanas pie datubazes caur include un arejo failu
+9. izmantot construktor lai pieslegties pie datubazes -->
 
 <!DOCTYPE html>
 <html lang="lv">
@@ -43,8 +44,8 @@
 <div id="posts-container"></div>
 
 <?php
-// Iekļaujam database.php, lai izmantotu savienojumu ar datubāzi
-include 'database.php';
+// Iekļaujam Database.php, lai izmantotu datubāzes savienojumu
+require_once 'database.php'; // Iekļaujam datubāzes savienojuma klasi
 
 class Comment {
     public $comment_id;
@@ -96,7 +97,19 @@ class Post {
     }
 }
 
-// Veicam datubāzes pieprasījumu, izmantojot `pdo` mainīgo no db_connection.php
+// Definējam datubāzes iestatījumus
+$host = 'localhost';
+$db   = 'blog_12032025';
+$user = 'TripiTropi';
+$pass = 'password';
+$charset = 'utf8mb4';
+
+// Izveidojam Database objektu, pārsūtot datubāzes iestatījumus uz konstruktoru
+$database = new Database($host, $db, $user, $pass, $charset);
+
+// Iegūstam PDO objektu no Database klases
+$pdo = $database->getPDO();
+
 try {
     $sql = "
         SELECT 

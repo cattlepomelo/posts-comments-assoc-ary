@@ -1,29 +1,41 @@
 <?php
-// database.php
+// Database.php
 
-// Iestatījumi datubāzes pieslēgumam
-$host = 'localhost';      // Datubāzes hosta nosaukums
-$db   = 'blog_12032025';  // Datubāzes nosaukums
-$user = 'TripiTropi';     // Lietotājvārds
-$pass = 'password';       // Parole
-$charset = 'utf8mb4';     // Rakstzīmju kodējums
+class Database {
+    private $host;
+    private $db;
+    private $user;
+    private $pass;
+    private $charset;
+    private $pdo;
 
-// Izveidojam DSN (Data Source Name)
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+    // Konstruktoram jāpieņem datubāzes iestatījumi no ārpuses
+    public function __construct($host, $db, $user, $pass, $charset = 'utf8mb4') {
+        $this->host = $host;
+        $this->db = $db;
+        $this->user = $user;
+        $this->pass = $pass;
+        $this->charset = $charset;
 
-// Iestatījumi PDO opcijām
-$options = [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, // Kļūdu ziņojumi
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC // Noklusējuma datu iegūšanas režīms
-];
+        $dsn = "mysql:host=$this->host;dbname=$this->db;charset=$this->charset";
+        
+        $options = [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, // Kļūdu ziņojumi
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC // Noklusējuma datu iegūšanas režīms
+        ];
 
-// Mēģinām izveidot savienojumu
-try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
-    // Ja viss ir veiksmīgi, izvada ziņojumu
-    // echo "Savienojums izveidots!";
-} catch (PDOException $e) {
-    // Ja notiek kļūda, pārtrauc izpildi un izvada kļūdu
-    die("Savienojuma kļūda: " . $e->getMessage());
+        try {
+            // Izveidojam PDO savienojumu
+            $this->pdo = new PDO($dsn, $this->user, $this->pass, $options);
+        } catch (PDOException $e) {
+            // Ja ir kļūda, pārtrauc izpildi un izvada kļūdu
+            die("Savienojuma kļūda: " . $e->getMessage());
+        }
+    }
+
+    // Funkcija, kas atgriež PDO objektu
+    public function getPDO() {
+        return $this->pdo;
+    }
 }
 ?>
