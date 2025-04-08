@@ -2,7 +2,10 @@
 2. ar left join nemam posts pie comments
 3. dabuju no datubazes plakanu masivu(nav hierarhijas)
 4. parveidojam flat masivu par associativu
-5. izvadit datus html -->
+5. izvadit datus html
+6. mainit masivu uz objektu un pievienot konstruktoru
+7. izvadīt posts ar funkciju display(); -->
+
 <!DOCTYPE html>
 <html lang="lv">
 <head>
@@ -39,7 +42,56 @@
 <div id="posts-container"></div>
 
 <?php
-// Pieslēgšanās datubāzei
+class Comment {
+    public $comment_id;
+    public $comment_text;
+
+    public function __construct($comment_id, $comment_text) {
+        $this->comment_id = $comment_id;
+        $this->comment_text = $comment_text;
+    }
+}
+
+class Post {
+    public $post_id;
+    public $title;
+    public $content;
+    public $comments = [];
+
+    public function __construct($post_id, $title, $content) {
+        $this->post_id = $post_id;
+        $this->title = $title;
+        $this->content = $content;
+    }
+
+    public function addComment($comment) {
+        $this->comments[] = $comment;
+    }
+
+    // display funkcija, kas izvada postu un komentārus
+    public function display() {
+        echo '<div class="post">';
+        echo '<h2>' . htmlspecialchars($this->title) . '</h2>';
+        echo '<p>' . nl2br(htmlspecialchars($this->content)) . '</p>';
+
+        echo '<div class="comments">';
+        echo '<h4>Komentāri:</h4>';
+
+        if (!empty($this->comments)) {
+            echo '<ul>';
+            foreach ($this->comments as $comment) {
+                echo '<li>' . htmlspecialchars($comment->comment_text) . '</li>';
+            }
+            echo '</ul>';
+        } else {
+            echo '<p><em>Nav komentāru.</em></p>';
+        }
+
+        echo '</div>'; // .comments
+        echo '</div>'; // .post
+    }
+}
+
 $host = 'localhost';
 $db   = 'blog_12032025';
 $user = 'TripiTropi';
@@ -55,7 +107,6 @@ $options = [
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 
-    // SQL vaicājums
     $sql = "
         SELECT 
             posts.post_id,
@@ -70,60 +121,38 @@ try {
     $stmt = $pdo->query($sql);
     $flatData = $stmt->fetchAll();
 
-    // Pārveidojam uz asociatīvo struktūru
-    $structuredData = [];
+    $posts = [];
 
     foreach ($flatData as $row) {
         $postId = $row['post_id'];
 
-        if (!isset($structuredData[$postId])) {
-            $structuredData[$postId] = [
-                'post_id' => $postId,
-                'title' => $row['title'],
-                'content' => $row['content'],
-                'comments' => []
-            ];
+        if (!isset($posts[$postId])) {
+            $posts[$postId] = new Post($postId, $row['title'], $row['content']);
         }
 
         if (!empty($row['comment_id'])) {
-            $structuredData[$postId]['comments'][] = [
-                'comment_id' => $row['comment_id'],
-                'comment_text' => $row['comment_text']
-            ];
+            $comment = new Comment($row['comment_id'], $row['comment_text']);
+            $posts[$postId]->addComment($comment);
         }
     }
 
-    // Saglabājam datus JSON formātā
-    $jsonData = json_encode($structuredData);
+    // Pievienojam vēl vienu testu postu ar komentāriem
+    $post = new Post(999, "Testa Post", "Šis ir testa saturs.");
+    $post->addComment(new Comment(1, "Šis ir pirmais komentārs."));
+    $post->addComment(new Comment(2, "Šis ir otrais komentārs."));
+    $post->addComment(new Comment(3, "Šis ir trešais komentārs."));
+
+    $posts[999] = $post;
 
 } catch (PDOException $e) {
     die("Savienojuma kļūda: " . $e->getMessage());
 }
 
-
 echo '<div class="posts-container">';
 
-foreach ($structuredData as $post) {
-    // Veidojam HTML, izmantojot PHP
-    echo '<div class="post">';
-    echo '<h2>' . htmlspecialchars($post['title']) . '</h2>';
-    echo '<p>' . nl2br(htmlspecialchars($post['content'])) . '</p>';
-
-    echo '<div class="comments">';
-    echo '<h4>Komentāri:</h4>';
-
-    if (!empty($post['comments'])) {
-        echo '<ul>';
-        foreach ($post['comments'] as $comment) {
-            echo '<li>' . htmlspecialchars($comment['comment_text']) . '</li>';
-        }
-        echo '</ul>';
-    } else {
-        echo '<p><em>Nav komentāru.</em></p>';
-    }
-
-    echo '</div>'; // .comments
-    echo '</div>'; // .post
+// Izvadām visus postus, izmantojot display metodi
+foreach ($posts as $post) {
+    $post->display();
 }
 
 echo '</div>'; // .posts-container
